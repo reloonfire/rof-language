@@ -17,6 +17,7 @@ func (p *Parser) expression() interface{} {
 }
 
 func (p *Parser) equality() interface{} {
+	//fmt.Println("[DEBUG] Equality ->", p.peek())
 	expr := p.comparison()
 	for p.match(BANG, BANG_EQUAL) {
 		operator := p.previous()
@@ -48,6 +49,7 @@ func (p *Parser) advance() Token {
 	if !p.isAtEnd() {
 		p.Current++
 	}
+	//fmt.Println("[DEBUG] Current cursor -> ", p.Current)
 	return p.previous()
 }
 
@@ -64,11 +66,13 @@ func (p *Parser) previous() Token {
 }
 
 func (p *Parser) comparison() interface{} {
+	//fmt.Println("[DEBUG] Comparison ->", p.peek())
 	expr := p.addition()
 
 	for p.match(GREATER, GREATER_EQUAL, LESS, LESS_EQUAL) {
 		operator := p.previous()
 		right := p.addition()
+		//fmt.Println("[DEBUG] IS Comparison")
 		expr = Binary{Left: expr, Operator: operator, Right: right}
 	}
 
@@ -76,11 +80,13 @@ func (p *Parser) comparison() interface{} {
 }
 
 func (p *Parser) addition() interface{} {
+	//fmt.Println("[DEBUG] Addition ->", p.peek())
 	expr := p.multiplication()
 
 	for p.match(MINUS, PLUS) {
 		operator := p.previous()
 		right := p.multiplication()
+		//fmt.Println("[DEBUG] IS Addition")
 		expr = Binary{Left: expr, Operator: operator, Right: right}
 	}
 
@@ -88,11 +94,13 @@ func (p *Parser) addition() interface{} {
 }
 
 func (p *Parser) multiplication() interface{} {
+	//fmt.Println("[DEBUG] Multiplication ->", p.peek())
 	expr := p.unary()
 
 	for p.match(SLASH, STAR) {
 		operator := p.previous()
 		right := p.unary()
+		//fmt.Println("[DEBUG] IS Multiplication")
 		expr = Binary{Left: expr, Operator: operator, Right: right}
 	}
 
@@ -100,9 +108,11 @@ func (p *Parser) multiplication() interface{} {
 }
 
 func (p *Parser) unary() interface{} {
+	//fmt.Println("[DEBUG] Unary ->", p.peek())
 	if p.match(BANG, MINUS) {
 		operator := p.previous()
 		right := p.unary()
+		//fmt.Println("[DEBUG] IS Unary")
 		return Unary{Operator: operator, Right: right}
 	}
 
@@ -110,6 +120,7 @@ func (p *Parser) unary() interface{} {
 }
 
 func (p *Parser) primary() interface{} {
+	//fmt.Println("[DEBUG] Primary ->", p.peek())
 	if p.match(FALSE) {
 		return Literal{Value: false}
 	}
@@ -148,12 +159,12 @@ func (p *Parser) error(token Token, text string) {
 	if token.TokenType == EOF {
 		p.report(token.Line, " at end", text)
 	} else {
-		p.report(token.Line, " ad '"+token.Lexeme+"'", text)
+		p.report(token.Line, " at '"+token.Lexeme+"'", text)
 	}
 }
 
 func (p *Parser) report(line int, where, message string) {
-	fmt.Println("[line ", line, "] Error", where, ": ", message)
+	fmt.Println("[ line ", line, "] Error", where, ": ", message)
 	p.HadError = true
 }
 
