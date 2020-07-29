@@ -8,6 +8,10 @@ type Parser struct {
 	HadError bool
 }
 
+func (p *Parser) Parse() interface{} {
+	return p.expression()
+}
+
 func (p *Parser) expression() interface{} {
 	return p.equality()
 }
@@ -125,6 +129,8 @@ func (p *Parser) primary() interface{} {
 		p.consume(RIGHT_PAREN, "Expect ')' after expression.")
 		return Grouping{Expression: expr}
 	}
+
+	p.error(p.peek(), "Expect expression.")
 	return nil
 }
 
@@ -149,4 +155,28 @@ func (p *Parser) error(token Token, text string) {
 func (p *Parser) report(line int, where, message string) {
 	fmt.Println("[line ", line, "] Error", where, ": ", message)
 	p.HadError = true
+}
+
+func (p *Parser) synchronize() {
+	p.advance()
+
+	for !p.isAtEnd() {
+		if p.previous().TokenType == SEMICOLON {
+			return
+		}
+
+		switch p.peek().TokenType {
+		case CLASS:
+		case FUN:
+		case VAR:
+		case FOR:
+		case IF:
+		case WHILE:
+		case PRINT:
+		case RETURN:
+			return
+		}
+
+		p.advance()
+	}
 }

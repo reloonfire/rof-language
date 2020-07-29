@@ -1,9 +1,16 @@
 package rof
 
-import "reflect"
+import (
+	"fmt"
+	"reflect"
+)
 
 type ASTPrinter struct {
-	Visitor Visitor
+}
+
+func (a *ASTPrinter) Print(expr interface{}) string {
+	fmt.Println("[DEBUG] Reflect Value Of ->", reflect.ValueOf(expr).Kind())
+	return reflect.ValueOf(expr).MethodByName("Accept").Call([]reflect.Value{reflect.ValueOf(a)})[0].String()
 }
 
 func (a *ASTPrinter) visitBinaryExpr(expr Binary) string {
@@ -30,7 +37,7 @@ func (a *ASTPrinter) parenthesize(name string, exprs ...interface{}) string {
 
 	text += "(" + name
 	for _, expr := range exprs {
-		text += " " + reflect.ValueOf(&expr).MethodByName("accept").Call([]reflect.Value{reflect.ValueOf(a.Visitor)})[0].String()
+		text += " " + reflect.ValueOf(expr).MethodByName("Accept").Call([]reflect.Value{reflect.ValueOf(a)})[0].String()
 	}
 	text += ")"
 	return text

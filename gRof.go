@@ -27,13 +27,18 @@ func main() {
 		// file passato inizio con l'interpretazione
 		// gRof()
 		sc := new(rof.Scanner)
+		parser := new(rof.Parser)
 		s, _ := ioutil.ReadFile("test.rof")
 		sc.Source = string(s)
-		sc.Scan()
-		fmt.Println(sc.Tokens)
+		tokens := sc.Scan()
 		if sc.HadError {
 			return
 		}
+		fmt.Println("[DEBUG] Tokens -> ", tokens)
+		parser.Tokens = tokens
+		expr := parser.Parse()
+		fmt.Println(expr)
+
 		//fmt.Println("Args: ", os.Args[1:])
 	} else {
 		// Interactive mode
