@@ -1,8 +1,29 @@
 package rof
 
 import (
+	"strconv"
+
 	"github.com/reloonfire/rof-language/helpers"
 )
+
+var keywords = map[TokenType]string{
+	AND:    "and",
+	CLASS:  "class",
+	ELSE:   "else",
+	FALSE:  "false",
+	FOR:    "for",
+	FUN:    "fun",
+	IF:     "if",
+	NIL:    "nil",
+	OR:     "or",
+	PRINT:  "print",
+	RETURN: "return",
+	SUPER:  "super",
+	THIS:   "this",
+	TRUE:   "true",
+	VAR:    "var",
+	WHILE:  "while",
+}
 
 // Scanner - Scanner look into the source looking for tokens
 type Scanner struct {
@@ -27,6 +48,7 @@ func (s *Scanner) Scan() []Token {
 
 func (s *Scanner) advance() string {
 	s.Current++
+	//fmt.Print("", string(s.Source[s.Current-1]))
 	return string(s.Source[s.Current-1])
 }
 
@@ -102,9 +124,18 @@ func (s *Scanner) scanToken() {
 	case "/":
 		if s.match("/") {
 			// A comment goes until the end of the line.
+			//fmt.Println("[DEBUG] LINE [", s.Line, "] COMMENT")
 			for s.peek() != "\n" && !s.IsEnd() {
 				s.advance()
 			}
+		} else if s.match("*") {
+			// Multi Line Comment
+			//fmt.Println("[DEBUG] LINE [", s.Line, "] START OF MULTILINE COMMENT")
+			for s.peek() != "*" && s.peekNext() != "/" && !s.IsEnd() {
+				s.advance()
+			}
+			s.Current += 2
+			//fmt.Println("[DEBUG] LINE [", s.Line, "] END OF MULTILINE COMMENT")
 		} else {
 			s.addToken(SLASH, nil)
 		}
@@ -115,14 +146,77 @@ func (s *Scanner) scanToken() {
 		// Ignore whitespace.
 		break
 	case "\n":
+		//fmt.Println("[DEBUG] LINE [", s.Line, "] NEW LINE")
 		s.Line++
 		break
 	case "\"":
 		s.string()
 		break
 	default:
-		helpers.ReportError(s.Line, "Unexpected character.")
+		if s.isDigit(c) {
+			s.number()
+		} else if s.isAlpha(c) {
+			s.identifier()
+		} else {
+			helpers.ReportError(s.Line, "Unexpected character.")
+		}
+		break
 	}
+}
+
+func (s *Scanner) isAlpha(c string) bool {
+	return c >= "a" && c <= "z" || c >= "A" && c <= "Z" || c == "_"
+}
+
+func (s *Scanner) isDigit(c string) bool {
+	return c >= "0" && c <= "9"
+}
+
+func (s *Scanner) isAlphaNumeric(c string) bool {
+	return s.isAlpha(c) || s.isDigit(c)
+}
+
+func (s *Scanner) identifier() {
+	for s.isAlphaNumeric(s.peek()) {
+		s.advance()
+	}
+
+	text := s.Source[s.Start:s.Current]
+
+	t := getKeyFromValue(keywords, text)
+	if t == -1 {
+		t = IDENTIFIER
+	}
+
+	s.addToken(t, nil)
+}
+
+func (s *Scanner) number() {
+	for s.isDigit(s.peek()) {
+		s.advance()
+	}
+
+	// Look for a fractional part.
+	if s.peek() == "." && s.isDigit(s.peekNext()) {
+		// Consume the "."
+		s.advance()
+
+		for s.isDigit(s.peek()) {
+			s.advance()
+		}
+	}
+	f, err := strconv.ParseFloat(s.Source[s.Start:s.Current], 64)
+	if err != nil {
+		helpers.ReportError(s.Line, "Cannot convert to float.")
+	}
+	s.addToken(NUMBER, f)
+}
+
+func (s *Scanner) peekNext() string {
+	if s.Current+1 >= len(s.Source) {
+		return "\000"
+	}
+	return string(s.Source[s.Current+1])
 }
 
 func (s *Scanner) string() {
@@ -168,4 +262,13 @@ func (s *Scanner) match(what string) bool {
 // IsEnd - Check if current cursor is at the ending of source
 func (s *Scanner) IsEnd() bool {
 	return s.Current >= len(s.Source)
+}
+
+func getKeyFromValue(m map[TokenType]string, value string) TokenType {
+	for k, v := range m {
+		if v == value {
+			return k
+		}
+	}
+	return -1
 }

@@ -1,8 +1,11 @@
 // Support comments
 // TODO: Add multiline comments
-< 
-; 
->=
-== 
-"aiaia"
-;
+/* asdasda
+asdasdaa
+asdasda
+asdasdaasd
+asdasdaasdda
+dasdasdasdasdasdada\n
+*/
+var
+and
