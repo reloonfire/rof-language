@@ -36,3 +36,13 @@ type Block struct {
 func (v Block) Statement() Stmt {
 	return v
 }
+
+type If struct {
+	Condition  Expr
+	ThenBranch Stmt
+	ElseBranch Stmt
+}
+
+func (v If) Statement() Stmt {
+	return v
+}

@@ -60,6 +60,8 @@ func (i Interpreter) execute(stmt Stmt) {
 		i.VarStmt(t)
 	case Block:
 		i.BlockStmt(t)
+	case If:
+		i.IfStmt(t)
 	default:
 		fmt.Println("[ERROR] Type -> ", reflect.TypeOf(t))
 	}
@@ -68,7 +70,7 @@ func (i Interpreter) execute(stmt Stmt) {
 func (i Interpreter) BinaryExpr(expr Binary) interface{} {
 	right := i.evaluate(expr.Right)
 	left := i.evaluate(expr.Left)
-	//fmt.Println("[DEBUG] BinaryExpr Called -> ", expr, "\n\n	RIGHT -> ", right, "\n	LEFT -> ", left, "\n	Operator -> ", expr.Operator)
+	fmt.Println("[DEBUG] BinaryExpr Called -> ", expr, "\n\n	RIGHT -> ", right, "\n	LEFT -> ", left, "\n	Operator -> ", expr.Operator)
 
 	switch expr.Operator.TokenType {
 	case GREATER:
@@ -175,6 +177,14 @@ func (i Interpreter) BlockStmt(stmt Block) {
 	}
 }
 
+func (i Interpreter) IfStmt(stmt If) {
+	if i.isTruthy(i.evaluate(stmt.Condition)) {
+		i.execute(stmt.ThenBranch)
+	} else if stmt.ElseBranch != nil {
+		i.execute(stmt.ElseBranch)
+	}
+}
+
 // Helper
 
 func (i Interpreter) isTruthy(obj interface{}) bool {
@@ -191,8 +201,15 @@ func (i Interpreter) isEqual(obj1, obj2 interface{}) bool {
 	return obj1 == obj2
 }
 
-func (i Interpreter) checkNumberOperand(operator Token, operand interface{}) NumberLiteral {
-	n, ok := operand.(NumberLiteral)
+func (i Interpreter) checkNumberOperand(operator Token, operand interface{}) float64 {
+	var n float64
+	ok := false
+
+	switch t := operand.(type) {
+	case float64:
+		ok = true
+		n = t
+	}
 
 	if !ok {
 		panic(&RuntimeError{operator, "Operand must be number"})
@@ -201,9 +218,19 @@ func (i Interpreter) checkNumberOperand(operator Token, operand interface{}) Num
 	return n
 }
 
-func (i Interpreter) checkNumberOperands(operator Token, left, right interface{}) (NumberLiteral, NumberLiteral) {
-	n1, ok1 := left.(NumberLiteral)
-	n2, ok2 := right.(NumberLiteral)
+func (i Interpreter) checkNumberOperands(operator Token, left, right interface{}) (float64, float64) {
+	ok1, ok2 := false, false
+	var n1, n2 float64
+	switch t := left.(type) {
+	case float64:
+		ok1 = true
+		n1 = t
+	}
+	switch t := right.(type) {
+	case float64:
+		ok2 = true
+		n2 = t
+	}
 	if !ok1 || !ok2 {
 		panic(&RuntimeError{operator, "Operands must be numbers"})
 	}
