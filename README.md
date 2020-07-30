@@ -10,8 +10,8 @@ it is completely written by me and it will probably be a good mess or maybe not.
 
 ## TODO (apart from the book)
 
-- Improve error system
-- String operation
+- Improve error system (With last improvements is slightly better) 
+- String operation (Plus between 2 string now works)
 - Convert print to stdlib function, not builtin
 - Add interactive shell
 
