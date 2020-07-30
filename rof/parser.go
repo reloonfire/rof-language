@@ -1,6 +1,8 @@
 package rof
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type Parser struct {
 	Tokens     []Token
@@ -20,10 +22,6 @@ func (p *Parser) Parse() []Stmt {
 
 	for !p.isAtEnd() {
 		p.Statements = append(p.Statements, p.declaration())
-		if p.HadError {
-			p.synchronize()
-			return nil
-		}
 	}
 
 	return p.Statements
@@ -48,7 +46,24 @@ func (p *Parser) varDeclaration() Var {
 }
 
 func (p *Parser) expression() Expr {
-	return p.equality()
+	return p.assignment()
+}
+
+func (p *Parser) assignment() Expr {
+	expr := p.equality()
+	if p.match(EQUAL) {
+		fmt.Println("[EQUAL]")
+		equals := p.previous()
+		value := p.assignment()
+		exprVar, ok := expr.(Variable)
+		if ok {
+			return Assign{exprVar.Name, value}
+		}
+
+		panic(&ParseError{equals, "Invalid assignment target."})
+	}
+
+	return expr
 }
 
 func (p *Parser) statement() Stmt {
@@ -138,7 +153,6 @@ func (p *Parser) unary() Expr {
 }
 
 func (p *Parser) primary() Expr {
-	//fmt.Println("[DEBUG] Primary ->", p.peek())
 	if p.match(FALSE) {
 		return Literal{Value: false}
 	}
@@ -154,7 +168,7 @@ func (p *Parser) primary() Expr {
 	}
 
 	if p.match(IDENTIFIER) {
-		return Variable{Name: p.previous()}
+		return Variable{p.previous()}
 	}
 
 	if p.match(LEFT_PAREN) {

@@ -12,6 +12,15 @@ type Expr interface {
 	Expression() Expr
 }
 
+type Assign struct {
+	Name  Token
+	Value Expr
+}
+
+func (b Assign) Expression() Expr {
+	return b
+}
+
 type Binary struct {
 	Left     Expr
 	Operator Token

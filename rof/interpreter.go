@@ -42,6 +42,8 @@ func (i Interpreter) evaluate(expr Expr) interface{} {
 		return i.UnaryExpr(t)
 	case Variable:
 		return i.VariableExpr(t)
+	case Assign:
+		return i.AssignExpr(t)
 	default:
 		fmt.Println("[ERROR] Type -> ", reflect.TypeOf(t))
 		return nil
@@ -133,6 +135,13 @@ func (i Interpreter) UnaryExpr(expr Unary) interface{} {
 
 func (i Interpreter) VariableExpr(expr Variable) interface{} {
 	return i.Env.Get(expr.Name)
+}
+
+func (i Interpreter) AssignExpr(expr Assign) interface{} {
+	value := i.evaluate(expr.Value)
+
+	i.Env.Assign(expr.Name, value)
+	return value
 }
 
 func (i Interpreter) ExprStmt(stmt Expression) {
