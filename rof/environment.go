@@ -9,11 +9,11 @@ type Environment struct {
 	Values    map[string]interface{}
 }
 
-func NewEnv() Environment {
-	var e Environment
-	e.Enclosing = nil
-	e.Values = make(map[string]interface{}, 15)
-	return e
+func NewEnv(enclosing *Environment) *Environment {
+	return &Environment{
+		Enclosing: enclosing,
+		Values:    make(map[string]interface{}),
+	}
 }
 
 func (e *Environment) Get(name Token) interface{} {
@@ -40,7 +40,7 @@ func (e *Environment) Assign(name Token, value interface{}) {
 	}
 
 	if e.Enclosing != nil {
-		e.Enclosing.ASsign(name, value)
+		e.Enclosing.Assign(name, value)
 		return
 	}
 

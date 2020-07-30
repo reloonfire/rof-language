@@ -1,8 +1,5 @@
 var a = 1;
-var b = 2;
-print "Dichiaro due variabili e le sommo assieme :D";
-print a+b;
-var c = 0;
-print c;
-c=2;
-print c=4;
+{
+  var a = a + 2;
+  print a;
+}

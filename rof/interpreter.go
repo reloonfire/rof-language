@@ -6,12 +6,12 @@ import (
 )
 
 type Interpreter struct {
-	Env Environment
+	Env *Environment
 }
 
 func NewInterpreter() Interpreter {
 	var i Interpreter
-	i.Env = NewEnv()
+	i.Env = NewEnv(nil)
 	return i
 }
 
@@ -58,6 +58,8 @@ func (i Interpreter) execute(stmt Stmt) {
 		i.PrintStmt(t)
 	case Var:
 		i.VarStmt(t)
+	case Block:
+		i.BlockStmt(t)
 	default:
 		fmt.Println("[ERROR] Type -> ", reflect.TypeOf(t))
 	}
@@ -161,6 +163,16 @@ func (i Interpreter) VarStmt(stmt Var) {
 	}
 	//fmt.Println("[DEBUG] Create var ", stmt.Name.Lexeme, " -> ", value)
 	i.Env.Define(stmt.Name.Lexeme, value)
+}
+
+func (i Interpreter) BlockStmt(stmt Block) {
+	previous := i.Env
+
+	i.Env = NewEnv(previous)
+	defer func() { i.Env = previous }()
+	for _, s := range stmt.Statements {
+		i.execute(s)
+	}
 }
 
 // Helper
