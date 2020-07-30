@@ -3,17 +3,42 @@ package rof
 import "fmt"
 
 type Parser struct {
-	Tokens   []Token
-	Current  int
-	HadError bool
+	Tokens     []Token
+	Statements []interface{}
+	Current    int
+	HadError   bool
 }
 
-func (p *Parser) Parse() interface{} {
-	return p.expression()
+func (p *Parser) Parse() []interface{} {
+	for !p.isAtEnd() {
+		p.Statements = append(p.Statements, p.statement())
+	}
+
+	return p.Statements
 }
 
 func (p *Parser) expression() interface{} {
 	return p.equality()
+}
+
+func (p *Parser) statement() interface{} {
+	if p.match(PRINT) {
+		return p.printStatement()
+	}
+
+	return p.expressionStatement()
+}
+
+func (p *Parser) printStatement() interface{} {
+	value := p.expression()
+	p.consume(SEMICOLON, "Expect ; after value.")
+	return Print{Expr: value}
+}
+
+func (p *Parser) expressionStatement() interface{} {
+	value := p.expression()
+	p.consume(SEMICOLON, "Expect ; after expression.")
+	return Expression{Expr: value}
 }
 
 func (p *Parser) equality() interface{} {
@@ -147,7 +172,7 @@ func (p *Parser) primary() interface{} {
 
 func (p *Parser) consume(t TokenType, text string) Token {
 	if p.check(t) {
-		p.advance()
+		return p.advance()
 	}
 
 	p.error(p.peek(), text)
