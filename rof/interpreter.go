@@ -74,7 +74,7 @@ func (i Interpreter) execute(stmt Stmt) {
 func (i Interpreter) BinaryExpr(expr Binary) interface{} {
 	right := i.evaluate(expr.Right)
 	left := i.evaluate(expr.Left)
-	fmt.Println("[DEBUG] BinaryExpr Called -> ", expr, "\n\n	RIGHT -> ", right, "\n	LEFT -> ", left, "\n	Operator -> ", expr.Operator)
+	//fmt.Println("[DEBUG] BinaryExpr Called -> ", expr, "\n\n	RIGHT -> ", right, "\n	LEFT -> ", left, "\n	Operator -> ", expr.Operator)
 
 	switch expr.Operator.TokenType {
 	case GREATER:

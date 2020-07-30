@@ -1,4 +1,13 @@
+var a = 0;
+var b = 1;
 
+while (a < 10000) {
+  print a;
+  var temp = a;
+  a = b;
+  b = temp + b;
+}
 
-print "hi" or 2; // "hi".
-print nil or "yes"; // "yes".
+for(var i = 10; i > 0; i=i-1) {
+  print i;
+}
