@@ -64,6 +64,8 @@ func (i Interpreter) execute(stmt Stmt) {
 		i.BlockStmt(t)
 	case If:
 		i.IfStmt(t)
+	case While:
+		i.WhileStmt(t)
 	default:
 		fmt.Println("[ERROR] Type -> ", reflect.TypeOf(t))
 	}
@@ -199,6 +201,12 @@ func (i Interpreter) IfStmt(stmt If) {
 		i.execute(stmt.ThenBranch)
 	} else if stmt.ElseBranch != nil {
 		i.execute(stmt.ElseBranch)
+	}
+}
+
+func (i Interpreter) WhileStmt(stmt While) {
+	for i.isTruthy(i.evaluate(stmt.Condition)) {
+		i.execute(stmt.Body)
 	}
 }
 

@@ -96,11 +96,23 @@ func (p *Parser) statement() Stmt {
 	if p.match(PRINT) {
 		return p.printStatement()
 	}
+	if p.match(WHILE) {
+		return p.whileStatement()
+	}
 	if p.match(LEFT_BRACE) {
 		return Block{p.block()}
 	}
 
 	return p.expressionStatement()
+}
+
+func (p *Parser) whileStatement() Stmt {
+	p.consume(LEFT_PAREN, "Expect '(' before while condition.")
+	condition := p.expression()
+	p.consume(RIGHT_PAREN, "Expect ')' after while condition")
+	body := p.statement()
+
+	return While{condition, body}
 }
 
 func (p *Parser) ifStatement() Stmt {
