@@ -46,3 +46,12 @@ type If struct {
 func (v If) Statement() Stmt {
 	return v
 }
+
+type While struct {
+	Condition Expr
+	Body      Stmt
+}
+
+func (w While) Statement() Stmt {
+	return w
+}

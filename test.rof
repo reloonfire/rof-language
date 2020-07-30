@@ -1,6 +1,4 @@
-var a = 2;
-if (a < 3) {
-  print a;
-} else {
-  print 3;
-}
+
+
+print "hi" or 2; // "hi".
+print nil or "yes"; // "yes".

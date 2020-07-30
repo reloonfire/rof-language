@@ -50,9 +50,8 @@ func (p *Parser) expression() Expr {
 }
 
 func (p *Parser) assignment() Expr {
-	expr := p.equality()
+	expr := p.or()
 	if p.match(EQUAL) {
-		fmt.Println("[EQUAL]")
 		equals := p.previous()
 		value := p.assignment()
 		exprVar, ok := expr.(Variable)
@@ -61,6 +60,30 @@ func (p *Parser) assignment() Expr {
 		}
 
 		panic(&ParseError{equals, "Invalid assignment target."})
+	}
+
+	return expr
+}
+
+func (p *Parser) or() Expr {
+	expr := p.and()
+
+	for p.match(OR) {
+		operator := p.previous()
+		right := p.and()
+		return Logical{expr, operator, right}
+	}
+
+	return expr
+}
+
+func (p *Parser) and() Expr {
+	expr := p.equality()
+
+	for p.match(AND) {
+		operator := p.previous()
+		right := p.equality()
+		return Logical{expr, operator, right}
 	}
 
 	return expr

@@ -55,3 +55,13 @@ type Variable struct {
 func (v Variable) Expression() Expr {
 	return v
 }
+
+type Logical struct {
+	Left     Expr
+	Operator Token
+	Right    Expr
+}
+
+func (l Logical) Expression() Expr {
+	return l
+}

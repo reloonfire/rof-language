@@ -44,6 +44,8 @@ func (i Interpreter) evaluate(expr Expr) interface{} {
 		return i.VariableExpr(t)
 	case Assign:
 		return i.AssignExpr(t)
+	case Logical:
+		return i.LogicalExpr(t)
 	default:
 		fmt.Println("[ERROR] Type -> ", reflect.TypeOf(t))
 		return nil
@@ -146,6 +148,21 @@ func (i Interpreter) AssignExpr(expr Assign) interface{} {
 
 	i.Env.Assign(expr.Name, value)
 	return value
+}
+
+func (i Interpreter) LogicalExpr(expr Logical) interface{} {
+	left := i.evaluate(expr.Left)
+
+	if expr.Operator.TokenType == OR {
+		if i.isTruthy(left) {
+			return left
+		}
+	} else {
+		if !i.isTruthy(left) {
+			return left
+		}
+	}
+	return i.evaluate(expr.Right)
 }
 
 func (i Interpreter) ExprStmt(stmt Expression) {
