@@ -5,6 +5,7 @@ type Statement interface{}
 type VisitorStatement interface {
 	visitExprStmt(expr Expression) interface{}
 	visitPrintStmt(expr Print) interface{}
+	visitVarStmt(expr Var) interface{}
 }
 
 type Expression struct {
@@ -21,4 +22,13 @@ type Print struct {
 
 func (p Print) Accept(visitor VisitorStatement) interface{} {
 	return visitor.visitPrintStmt(p)
+}
+
+type Var struct {
+	Name        Token
+	Initializer Expr
+}
+
+func (p Var) Accept(visitor VisitorStatement) interface{} {
+	return visitor.visitVarStmt(p)
 }

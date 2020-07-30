@@ -11,10 +11,32 @@ type Parser struct {
 
 func (p *Parser) Parse() []interface{} {
 	for !p.isAtEnd() {
-		p.Statements = append(p.Statements, p.statement())
+		p.Statements = append(p.Statements, p.declaration())
+		if p.HadError {
+			p.synchronize()
+			return nil
+		}
 	}
 
 	return p.Statements
+}
+
+func (p *Parser) declaration() interface{} {
+	if p.match(VAR) {
+		return p.varDeclaration()
+	}
+
+	return p.statement()
+}
+
+func (p *Parser) varDeclaration() interface{} {
+	tokenName := p.consume(IDENTIFIER, "Expect variable name.")
+	var initializer interface{}
+	if p.match(EQUAL) {
+		initializer = p.expression()
+	}
+	p.consume(SEMICOLON, "Expect ';' after variable declaration.")
+	return Var{Name: tokenName, Initializer: initializer}
 }
 
 func (p *Parser) expression() interface{} {
@@ -158,6 +180,10 @@ func (p *Parser) primary() interface{} {
 
 	if p.match(NUMBER, STRING) {
 		return Literal{p.previous().Literal}
+	}
+
+	if p.match(IDENTIFIER) {
+		return Variable{Name: p.previous()}
 	}
 
 	if p.match(LEFT_PAREN) {

@@ -6,6 +6,13 @@ import (
 )
 
 type Interpreter struct {
+	Env Environment
+}
+
+func NewInterpreter() Interpreter {
+	var i Interpreter
+	i.Env = NewEnv()
+	return i
 }
 
 func (i Interpreter) Interpret(stmts []interface{}) {
@@ -85,6 +92,10 @@ func (i Interpreter) visitUnaryExpr(expr Unary) interface{} {
 
 }
 
+func (i Interpreter) visitVariableExpr(expr Variable) interface{} {
+	return i.Env.Get(expr.Name)
+}
+
 func (i Interpreter) visitExprStmt(stmt Expression) interface{} {
 	return i.evaluate(stmt.Expr)
 }
@@ -93,6 +104,15 @@ func (i Interpreter) visitPrintStmt(stmt Print) interface{} {
 	//fmt.Println("[DEBUG] Print Called ->", stmt)
 	value := i.evaluate(stmt.Expr)
 	fmt.Println(i.stringify(value))
+	return nil
+}
+
+func (i Interpreter) visitVarStmt(stmt Var) interface{} {
+	var value interface{}
+	if stmt.Initializer != nil {
+		value = i.evaluate(stmt.Initializer)
+	}
+	i.Env.Define(stmt.Name.Lexeme, value)
 	return nil
 }
 
