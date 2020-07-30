@@ -13,6 +13,7 @@ it is completely written by me and it will probably be a good mess or maybe not.
 - Improve error system
 - String operation
 - Convert print to stdlib function, not builtin
+- Add interactive shell
 
 ## Contributing
 
