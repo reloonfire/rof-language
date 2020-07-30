@@ -1,6 +1,8 @@
 package rof
 
-type Statement interface{}
+type Stmt interface {
+	Statement() Stmt
+}
 
 type VisitorStatement interface {
 	visitExprStmt(expr Expression) interface{}
@@ -9,19 +11,27 @@ type VisitorStatement interface {
 }
 
 type Expression struct {
-	Expr Expr
+	Expr
 }
 
 func (e Expression) Accept(visitor VisitorStatement) interface{} {
 	return visitor.visitExprStmt(e)
 }
 
+func (e Expression) Statement() Stmt {
+	return e
+}
+
 type Print struct {
-	Expr Expr
+	Expr
 }
 
 func (p Print) Accept(visitor VisitorStatement) interface{} {
 	return visitor.visitPrintStmt(p)
+}
+
+func (p Print) Statement() Stmt {
+	return p
 }
 
 type Var struct {
@@ -31,4 +41,8 @@ type Var struct {
 
 func (p Var) Accept(visitor VisitorStatement) interface{} {
 	return visitor.visitVarStmt(p)
+}
+
+func (v Var) Statement() Stmt {
+	return v
 }

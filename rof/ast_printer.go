@@ -1,5 +1,6 @@
 package rof
 
+/*
 import (
 	"fmt"
 	"reflect"
@@ -84,3 +85,4 @@ func ConvertToString(value interface{}) string {
 		return ""
 	}
 }
+*/

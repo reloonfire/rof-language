@@ -4,12 +4,20 @@ import "fmt"
 
 type Parser struct {
 	Tokens     []Token
-	Statements []interface{}
+	Statements []Stmt
 	Current    int
 	HadError   bool
 }
 
-func (p *Parser) Parse() []interface{} {
+func (p *Parser) Parse() []Stmt {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("Parse Error:", r.(error))
+			p.HadError = true
+			p.synchronize()
+		}
+	}()
+
 	for !p.isAtEnd() {
 		p.Statements = append(p.Statements, p.declaration())
 		if p.HadError {
@@ -21,7 +29,7 @@ func (p *Parser) Parse() []interface{} {
 	return p.Statements
 }
 
-func (p *Parser) declaration() interface{} {
+func (p *Parser) declaration() Stmt {
 	if p.match(VAR) {
 		return p.varDeclaration()
 	}
@@ -29,9 +37,9 @@ func (p *Parser) declaration() interface{} {
 	return p.statement()
 }
 
-func (p *Parser) varDeclaration() interface{} {
+func (p *Parser) varDeclaration() Var {
 	tokenName := p.consume(IDENTIFIER, "Expect variable name.")
-	var initializer interface{}
+	var initializer Expr
 	if p.match(EQUAL) {
 		initializer = p.expression()
 	}
@@ -39,11 +47,11 @@ func (p *Parser) varDeclaration() interface{} {
 	return Var{Name: tokenName, Initializer: initializer}
 }
 
-func (p *Parser) expression() interface{} {
+func (p *Parser) expression() Expr {
 	return p.equality()
 }
 
-func (p *Parser) statement() interface{} {
+func (p *Parser) statement() Stmt {
 	if p.match(PRINT) {
 		return p.printStatement()
 	}
@@ -51,19 +59,19 @@ func (p *Parser) statement() interface{} {
 	return p.expressionStatement()
 }
 
-func (p *Parser) printStatement() interface{} {
+func (p *Parser) printStatement() Stmt {
 	value := p.expression()
 	p.consume(SEMICOLON, "Expect ; after value.")
-	return Print{Expr: value}
+	return Print{value}
 }
 
-func (p *Parser) expressionStatement() interface{} {
+func (p *Parser) expressionStatement() Stmt {
 	value := p.expression()
 	p.consume(SEMICOLON, "Expect ; after expression.")
-	return Expression{Expr: value}
+	return Expression{value}
 }
 
-func (p *Parser) equality() interface{} {
+func (p *Parser) equality() Expr {
 	//fmt.Println("[DEBUG] Equality ->", p.peek())
 	expr := p.comparison()
 	for p.match(BANG, BANG_EQUAL) {
@@ -74,6 +82,91 @@ func (p *Parser) equality() interface{} {
 
 	return expr
 }
+
+func (p *Parser) comparison() Expr {
+	//fmt.Println("[DEBUG] Comparison ->", p.peek())
+	expr := p.addition()
+
+	for p.match(GREATER, GREATER_EQUAL, LESS, LESS_EQUAL) {
+		operator := p.previous()
+		right := p.addition()
+		//fmt.Println("[DEBUG] IS Comparison")
+		expr = Binary{Left: expr, Operator: operator, Right: right}
+	}
+
+	return expr
+}
+
+func (p *Parser) addition() Expr {
+	//fmt.Println("[DEBUG] Addition ->", p.peek())
+	expr := p.multiplication()
+
+	for p.match(MINUS, PLUS) {
+		operator := p.previous()
+		right := p.multiplication()
+		//fmt.Println("[DEBUG] IS Addition")
+		expr = Binary{Left: expr, Operator: operator, Right: right}
+	}
+
+	return expr
+}
+
+func (p *Parser) multiplication() Expr {
+	//fmt.Println("[DEBUG] Multiplication ->", p.peek())
+	expr := p.unary()
+
+	for p.match(SLASH, STAR) {
+		operator := p.previous()
+		right := p.unary()
+		//fmt.Println("[DEBUG] IS Multiplication")
+		expr = Binary{Left: expr, Operator: operator, Right: right}
+	}
+
+	return expr
+}
+
+func (p *Parser) unary() Expr {
+	//fmt.Println("[DEBUG] Unary ->", p.peek())
+	if p.match(BANG, MINUS) {
+		operator := p.previous()
+		right := p.unary()
+		//fmt.Println("[DEBUG] IS Unary")
+		return Unary{Operator: operator, Right: right}
+	}
+
+	return p.primary()
+}
+
+func (p *Parser) primary() Expr {
+	//fmt.Println("[DEBUG] Primary ->", p.peek())
+	if p.match(FALSE) {
+		return Literal{Value: false}
+	}
+	if p.match(TRUE) {
+		return Literal{Value: true}
+	}
+	if p.match(NIL) {
+		return Literal{Value: nil}
+	}
+
+	if p.match(NUMBER, STRING) {
+		return Literal{p.previous().Literal}
+	}
+
+	if p.match(IDENTIFIER) {
+		return Variable{Name: p.previous()}
+	}
+
+	if p.match(LEFT_PAREN) {
+		expr := p.expression()
+		p.consume(RIGHT_PAREN, "Expect ')' after expression.")
+		return Grouping{expr}
+	}
+
+	panic(&ParseError{p.peek(), "Expect expression"})
+}
+
+// Helper
 
 func (p *Parser) match(types ...TokenType) bool {
 	for _, t := range types {
@@ -112,111 +205,12 @@ func (p *Parser) previous() Token {
 	return p.Tokens[p.Current-1]
 }
 
-func (p *Parser) comparison() interface{} {
-	//fmt.Println("[DEBUG] Comparison ->", p.peek())
-	expr := p.addition()
-
-	for p.match(GREATER, GREATER_EQUAL, LESS, LESS_EQUAL) {
-		operator := p.previous()
-		right := p.addition()
-		//fmt.Println("[DEBUG] IS Comparison")
-		expr = Binary{Left: expr, Operator: operator, Right: right}
-	}
-
-	return expr
-}
-
-func (p *Parser) addition() interface{} {
-	//fmt.Println("[DEBUG] Addition ->", p.peek())
-	expr := p.multiplication()
-
-	for p.match(MINUS, PLUS) {
-		operator := p.previous()
-		right := p.multiplication()
-		//fmt.Println("[DEBUG] IS Addition")
-		expr = Binary{Left: expr, Operator: operator, Right: right}
-	}
-
-	return expr
-}
-
-func (p *Parser) multiplication() interface{} {
-	//fmt.Println("[DEBUG] Multiplication ->", p.peek())
-	expr := p.unary()
-
-	for p.match(SLASH, STAR) {
-		operator := p.previous()
-		right := p.unary()
-		//fmt.Println("[DEBUG] IS Multiplication")
-		expr = Binary{Left: expr, Operator: operator, Right: right}
-	}
-
-	return expr
-}
-
-func (p *Parser) unary() interface{} {
-	//fmt.Println("[DEBUG] Unary ->", p.peek())
-	if p.match(BANG, MINUS) {
-		operator := p.previous()
-		right := p.unary()
-		//fmt.Println("[DEBUG] IS Unary")
-		return Unary{Operator: operator, Right: right}
-	}
-
-	return p.primary()
-}
-
-func (p *Parser) primary() interface{} {
-	//fmt.Println("[DEBUG] Primary ->", p.peek())
-	if p.match(FALSE) {
-		return Literal{Value: false}
-	}
-	if p.match(TRUE) {
-		return Literal{Value: true}
-	}
-	if p.match(NIL) {
-		return Literal{Value: nil}
-	}
-
-	if p.match(NUMBER, STRING) {
-		return Literal{p.previous().Literal}
-	}
-
-	if p.match(IDENTIFIER) {
-		return Variable{Name: p.previous()}
-	}
-
-	if p.match(LEFT_PAREN) {
-		expr := p.expression()
-		p.consume(RIGHT_PAREN, "Expect ')' after expression.")
-		return Grouping{Expression: expr}
-	}
-
-	p.error(p.peek(), "Expect expression.")
-	return nil
-}
-
 func (p *Parser) consume(t TokenType, text string) Token {
 	if p.check(t) {
 		return p.advance()
 	}
 
-	p.error(p.peek(), text)
-
-	return Token{}
-}
-
-func (p *Parser) error(token Token, text string) {
-	if token.TokenType == EOF {
-		p.report(token.Line, " at end", text)
-	} else {
-		p.report(token.Line, " at '"+token.Lexeme+"'", text)
-	}
-}
-
-func (p *Parser) report(line int, where, message string) {
-	fmt.Println("[ line ", line, "] Error", where, ": ", message)
-	p.HadError = true
+	panic(&ParseError{p.peek(), text})
 }
 
 func (p *Parser) synchronize() {

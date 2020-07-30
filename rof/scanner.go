@@ -1,10 +1,22 @@
 package rof
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/reloonfire/rof-language/helpers"
 )
+
+type StringLiteral string
+type NumberLiteral float64
+
+func (sl StringLiteral) String() string {
+	return string(sl)
+}
+
+func (nl NumberLiteral) String() string {
+	return fmt.Sprint(float64(nl))
+}
 
 var keywords = map[TokenType]string{
 	AND:    "and",

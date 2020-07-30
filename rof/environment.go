@@ -27,4 +27,5 @@ func (e *Environment) Get(name Token) interface{} {
 
 func (e *Environment) Define(name string, value interface{}) {
 	e.Values[name] = value
+	//fmt.Println("[DEBUG] Env -> ", e.Values)
 }
