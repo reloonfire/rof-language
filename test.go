@@ -19,6 +19,8 @@ func main() {
 	if sc.HadError {
 		return
 	}
+	/*b, _ := json.Marshal(tokens)
+	fmt.Println("[DEBUG] Parsed Tokens -> ", string(b))*/
 	// Parser
 	parser.Tokens = tokens
 	expr := parser.Parse()

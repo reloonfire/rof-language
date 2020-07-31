@@ -65,3 +65,13 @@ type Logical struct {
 func (l Logical) Expression() Expr {
 	return l
 }
+
+type Call struct {
+	Callee Expr
+	Paren  Token
+	Args   []Expr
+}
+
+func (c Call) Expression() Expr {
+	return c
+}

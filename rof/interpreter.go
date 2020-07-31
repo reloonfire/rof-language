@@ -3,15 +3,19 @@ package rof
 import (
 	"fmt"
 	"reflect"
+	"time"
 )
 
 type Interpreter struct {
-	Env *Environment
+	Globals *Environment
+	Env     *Environment
 }
 
 func NewInterpreter() Interpreter {
 	var i Interpreter
-	i.Env = NewEnv(nil)
+	i.Globals = NewEnv(nil)
+	i.Env = i.Globals
+	i.Globals.Define("clock", NativeFunction{NativeCall: func(Interpreter, []Expr) interface{} { return float64(time.Now().Second()) }, A: 0})
 	return i
 }
 
@@ -46,6 +50,8 @@ func (i Interpreter) evaluate(expr Expr) interface{} {
 		return i.AssignExpr(t)
 	case Logical:
 		return i.LogicalExpr(t)
+	case Call:
+		return i.CallExpr(t)
 	default:
 		fmt.Println("[ERROR] Type -> ", reflect.TypeOf(t))
 		return nil
@@ -165,6 +171,29 @@ func (i Interpreter) LogicalExpr(expr Logical) interface{} {
 		}
 	}
 	return i.evaluate(expr.Right)
+}
+
+func (i Interpreter) CallExpr(expr Call) interface{} {
+	callee := i.evaluate(expr.Callee)
+
+	var args []Expr
+	for _, arg := range expr.Args {
+		args = append(args, i.evaluate(arg).(Expr))
+	}
+
+	if _, ok := callee.(Callable); !ok {
+		panic(&RuntimeError{expr.Paren, "Can only call functions and classes."})
+	}
+
+	function, _ := callee.(Callable)
+
+	if len(args) != function.Arity() {
+		panic(&RuntimeError{expr.Paren, "Expected " +
+			string(function.Arity()) + " arguments but got " +
+			string(len(args)) + "."})
+	}
+
+	return function.Call(i, args)
 }
 
 func (i Interpreter) ExprStmt(stmt Expression) {
